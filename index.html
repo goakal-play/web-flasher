@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>0AKAL Plays ESP Web Flasher</title>
+    <title>AKAL Plays ESP Web Flasher</title>
 
     <style>
         * {
@@ -319,17 +319,7 @@
 
     async function initESPLoader() {
 
-        log("Meminta akses port serial...");
-
         device = await navigator.serial.requestPort();
-
-        log("Port serial dipilih.");
-
-        /*
-         * Parameter kedua true mengaktifkan mode tracing
-         * pada transport. Bisa diubah menjadi false jika
-         * ingin mengurangi log internal.
-         */
 
         transport = new Transport(device, true);
 
@@ -345,25 +335,19 @@
                     // Tidak menghapus log aplikasi.
                 },
 
-                writeLine: (data) => {
-                    log(String(data));
+                writeLine: () => {
+                    // Sembunyikan log internal esptool.js agar tampilan tetap bersih.
                 },
 
-                write: (data) => {
-                    // Output tanpa newline tidak ditampilkan.
+                write: () => {
+                    // Sembunyikan log internal esptool.js agar tampilan tetap bersih.
                 }
 
             }
 
         });
 
-        log("Menghubungkan ke bootloader ESP...");
-
-        const chipName = await esploader.main();
-
-        log("Chip terdeteksi: " + chipName);
-
-        return chipName;
+        return await esploader.main();
     }
 
 
@@ -444,9 +428,6 @@
             window.location.href
         ).href;
 
-        log("Mengunduh firmware:");
-        log(firmwareUrl);
-
         const response = await fetch(firmwareUrl, {
             cache: "no-store"
         });
@@ -461,24 +442,12 @@
             );
         }
 
-        const arrayBuffer =
-            await response.arrayBuffer();
-
-        const firmwareData =
-            new Uint8Array(arrayBuffer);
+        const arrayBuffer = await response.arrayBuffer();
+        const firmwareData = new Uint8Array(arrayBuffer);
 
         if (firmwareData.length === 0) {
-
-            throw new Error(
-                "File firmware kosong."
-            );
+            throw new Error("File firmware kosong.");
         }
-
-        log(
-            "Ukuran firmware: " +
-            firmwareData.length +
-            " bytes"
-        );
 
         return firmwareData;
     }
@@ -492,31 +461,17 @@
 
         clearLog();
 
-        log("=================================");
-        log(" UNIVERSAL ESP WEB FLASHER");
-        log("=================================");
+        log("Menghapus seluruh isi flash...");
+        log("Mohon jangan mencabut kabel USB.");
+        log("Memulai flashing firmware...");
 
         progressContainer.style.display = "block";
 
         setProgress(0, "Connecting...");
 
-        // 1. Hubungkan ke board
         const chipName = await initESPLoader();
-
-        // 2. Pilih firmware otomatis berdasarkan chip
         const firmware = getFirmwareForChip(chipName);
-
-        log("Chip terdeteksi: " + chipName);
-        log("Firmware otomatis: " + firmware.fileName);
-        log("Flash offset: 0x" + firmware.flashOffset.toString(16).toUpperCase());
-
-        // 3. Download firmware
         const firmwareData = await downloadFirmware(firmware.fileName);
-
-        // 4. Persiapan erase
-        log("");
-        log("Menghapus seluruh isi flash...");
-        log("Mohon jangan mencabut kabel USB.");
 
         setProgress(0, "Erasing...");
 
@@ -526,10 +481,6 @@
                 address: firmware.flashOffset
             }
         ];
-
-        // 5. Flash firmware
-        log("");
-        log("Memulai flashing firmware...");
 
         setProgress(0, "Flashing...");
 
@@ -564,22 +515,13 @@
         log("=================================");
         log("[BERHASIL] Flashing selesai!");
         log("=================================");
+        log("");
+        log("Silahkan teken reset di ESP untuk mulai menggunakan Wifi Webkit.");
 
         try {
-
-            log("Melakukan reset board...");
-
             await esploader.after("hard_reset");
-
-            log("Board berhasil di-reset.");
-
         } catch (resetError) {
-
-            log(
-                "[INFO] Reset otomatis tidak tersedia: " +
-                getErrorMessage(resetError)
-            );
-
+            // Abaikan error reset otomatis.
         }
 
     }
@@ -596,31 +538,14 @@
         }
 
         try {
-
-            log("Menutup koneksi port serial...");
-
             await transport.disconnect();
-
-            /*
-             * Beri waktu agar port benar-benar bebas.
-             */
             await transport.waitForUnlock(500);
-
-            log("Port serial berhasil didiskoneksi.");
-
         } catch (error) {
-
-            log(
-                "[INFO] Penutupan port: " +
-                getErrorMessage(error)
-            );
-
+            // Abaikan error saat disconnect.
         } finally {
-
             device = null;
             transport = null;
             esploader = null;
-
         }
 
     }
@@ -646,19 +571,16 @@
 
             log("");
             log("[ERROR] " + getErrorMessage(error));
-
             setProgress(0, "Error");
 
         } finally {
 
             await disconnectSerial();
-
             connectBtn.disabled = false;
 
         }
 
     });
-
 </script>
 
 </body>
