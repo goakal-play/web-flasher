@@ -459,7 +459,7 @@
 
     async function flashFirmware() {
 
-        clearLog();
+        // clearLog();
 
         progressContainer.style.display = "block";
         setProgress(0, "Connecting...");
@@ -468,7 +468,7 @@
         const firmware = getFirmwareForChip(chipName);
         const firmwareData = await downloadFirmware(firmware.fileName);
 
-        clearLog();
+        // clearLog();
         log("Menghapus seluruh isi flash...");
         log("Mohon jangan mencabut kabel USB.");
 
@@ -483,6 +483,7 @@
 
         clearLog();
         log("Memulai flashing firmware...");
+        log("Mohon jangan mencabut kabel USB.");
 
         setProgress(0, "Flashing...");
 
