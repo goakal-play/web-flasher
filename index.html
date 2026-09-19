@@ -468,11 +468,11 @@
         const firmware = getFirmwareForChip(chipName);
         const firmwareData = await downloadFirmware(firmware.fileName);
 
-        // clearLog();
-        // log("Menghapus seluruh isi flash...");
-        // log("Mohon jangan mencabut kabel USB.");
+        clearLog();
+        log("Menghapus seluruh isi flash...");
+        log("Mohon jangan mencabut kabel USB.");
 
-        // setProgress(0, "Erasing...");
+        setProgress(0, "Erasing...");
 
         const fileArray = [
             {
@@ -481,17 +481,13 @@
             }
         ];
 
-        clearLog();
-        log("Menghapus seluruh isi flash...");
-        log("Mohon jangan mencabut kabel USB.");
-
-        setProgress(0, "Erasing...");
+       
 
         clearLog();
-        log("Memulai flashing firmware...");
+        log("Memulai flashing firmware, Silahkan tunggu...");
         log("Mohon jangan mencabut kabel USB.");
 
-        setProgress(0, "Flashing...");
+        setProgress(0, "Hapus data ESP...");
 
         await esploader.writeFlash({
 
@@ -517,6 +513,8 @@
             }
 
         });
+
+        log(" flassssssssssss");
 
         setProgress(100, "100%");
 
