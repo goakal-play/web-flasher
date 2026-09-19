@@ -468,11 +468,11 @@
         const firmware = getFirmwareForChip(chipName);
         const firmwareData = await downloadFirmware(firmware.fileName);
 
-        clearLog();
-        log("Menghapus seluruh isi flash...");
-        log("Mohon jangan mencabut kabel USB.");
+        // clearLog();
+        // log("Menghapus seluruh isi flash...");
+        // log("Mohon jangan mencabut kabel USB.");
 
-        setProgress(0, "Erasing...");
+        // setProgress(0, "Erasing...");
 
         const fileArray = [
             {
@@ -480,6 +480,12 @@
                 address: firmware.flashOffset
             }
         ];
+
+        clearLog();
+        log("Menghapus seluruh isi flash...");
+        log("Mohon jangan mencabut kabel USB.");
+
+        setProgress(0, "Erasing...");
 
         clearLog();
         log("Memulai flashing firmware...");
