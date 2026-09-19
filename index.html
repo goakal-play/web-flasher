@@ -118,10 +118,12 @@
     <div id="log">Siap. Hubungkan ESP dan klik tombol di atas...</div>
 </div>
 
-<!-- Load Polyfill Buffer untuk Browser -->
+<!-- Polyfill Buffer Lengkap untuk Window Scope -->
 <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
 <script>
-    window.Buffer = buffer.Buffer;
+    if (typeof window.Buffer === 'undefined') {
+        window.Buffer = buffer.Buffer;
+    }
 </script>
 
 <script type="module">
@@ -193,11 +195,12 @@
             progressFill.style.width = "0%";
             progressFill.innerText = "Erasing...";
 
-            // Konversi ArrayBuffer menjadi Uint8Array
-            const fileData = new Uint8Array(arrayBuffer);
+            // Membaca binary stream tanpa mengandalkan Buffer.from
+            const bytes = new Uint8Array(arrayBuffer);
             let binaryString = "";
-            for (let i = 0; i < fileData.length; i++) {
-                binaryString += String.fromCharCode(fileData[i]);
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
             }
 
             const fileArray = [{
@@ -207,7 +210,6 @@
 
             log(`Memulai menulis firmware ke offset 0x${flashOffset.toString(16)}...`);
 
-            // Parameter eraseAll: true diaktifkan untuk otomatis menghapus flash sebelum menulis
             await esploader.writeFlash({
                 fileArray: fileArray,
                 flashSize: "keep",
@@ -222,13 +224,23 @@
 
             log("\n=================================");
             log("[BERHASIL] Erase & Flashing Selesai!");
-            log("Tekan tombol RESET pada mikrokontroler.");
             log("=================================");
 
-            await transport.disconnect();
         } catch (err) {
             log("\n[ERROR] " + err.message);
         } finally {
+            // Otomatis menutup koneksi Serial Port setelah selesai/terjadi error
+            if (transport) {
+                try {
+                    log("Menutup koneksi port serial...");
+                    await transport.disconnect();
+                    await transport.waitForUnlock();
+                    log("Port Serial berhasil didiskoneksi otomatis.");
+                    log("Silakan tekan tombol RESET / re-plug USB pada board.");
+                } catch (e) {
+                    // Abaikan jika penutupan port sudah berhasil sebelumnya
+                }
+            }
             connectBtn.disabled = false;
         }
     });
