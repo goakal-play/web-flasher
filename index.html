@@ -481,13 +481,11 @@
             }
         ];
 
-       
-
         clearLog();
         log("Memulai flashing firmware, Silahkan tunggu...");
         log("Mohon jangan mencabut kabel USB.");
 
-        setProgress(0, "Hapus data ESP...");
+        setProgress(0, "Erasing...");
 
         await esploader.writeFlash({
 
@@ -513,8 +511,6 @@
             }
 
         });
-
-        log(" flassssssssssss");
 
         setProgress(100, "100%");
 
