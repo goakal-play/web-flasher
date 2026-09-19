@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal ESP Web Flasher</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 { color: #00bcd4; margin-bottom: 8px; }
+        p { color: #aaa; font-size: 14px; }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #ccc;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #00bcd4;
+            color: #121212;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+            width: 100%;
+        }
+        .btn:hover { background-color: #008ba3; color: #fff; }
+        .btn:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+        .btn-danger { background-color: #f44336; color: #fff; }
+        .btn-danger:hover { background-color: #d32f2f; }
+        #log {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 12px;
+            border-radius: 6px;
+            height: 180px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 20px;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+        .progress-fill {
+            height: 18px;
+            width: 0%;
+            background-color: #00bcd4;
+            text-align: center;
+            font-size: 12px;
+            line-height: 18px;
+            color: #000;
+            font-weight: bold;
+            transition: width 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Universal ESP Web Flasher</h2>
+    <p>Pilih firmware target lalu klik Connect & Flash.</p>
+
+    <div class="form-group">
+        <label for="firmwareSelect">Pilih Firmware Target:</label>
+        <select id="firmwareSelect">
+            <option value="combined_esp32s2.bin" data-offset="0x0000">ESP32-S2 Firmware (combined_esp32s2.bin)</option>
+            <option value="combined_esp8266.bin" data-offset="0x0000">ESP8266 Firmware (combined_esp8266.bin)</option>
+        </select>
+    </div>
+
+    <button id="connectBtn" class="btn">Connect & Flash</button>
+    <button id="eraseBtn" class="btn btn-danger">Erase Flash</button>
+
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+
+    <div id="log">Siap. Hubungkan ESP dan klik tombol di atas...</div>
+</div>
+
+<script type="module">
+    import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
+
+    const connectBtn = document.getElementById('connectBtn');
+    const eraseBtn = document.getElementById('eraseBtn');
+    const firmwareSelect = document.getElementById('firmwareSelect');
+    const logDiv = document.getElementById('log');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+
+    let device = null;
+    let transport = null;
+    let esploader = null;
+
+    function log(msg) {
+        logDiv.innerText += "\n" + msg;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    if (!("serial" in navigator)) {
+        log("[ERROR] Browser tidak mendukung Web Serial API! Gunakan Chrome/Edge di PC.");
+        connectBtn.disabled = true;
+        eraseBtn.disabled = true;
+    }
+
+    async function initESPLoader() {
+        device = await navigator.serial.requestPort();
+        transport = new Transport(device);
+        esploader = new ESPLoader({
+            transport: transport,
+            baudrate: 460800,
+            terminal: {
+                clean: () => { logDiv.innerText = ""; },
+                writeLine: (data) => log(data),
+                write: (data) => {}
+            }
+        });
+        // main() akan otomatis handshake & deteksi jenis chip (ESP32, ESP8266, dll)
+        await esploader.main();
+    }
+
+    connectBtn.addEventListener('click', async () => {
+        try {
+            connectBtn.disabled = true;
+            eraseBtn.disabled = true;
+            
+            const selectedOption = firmwareSelect.options[firmwareSelect.selectedIndex];
+            const fileName = selectedOption.value;
+            const flashOffset = parseInt(selectedOption.getAttribute('data-offset'));
+
+            log("Meminta akses port serial...");
+            await initESPLoader();
+            
+            log("Chip terdeteksi otomatis: " + esploader.chipName);
+
+            // Validasi Sederhana Jenis Chip
+            const chipNameLower = esploader.chipName.toLowerCase();
+            if (fileName.includes("esp32") && !chipNameLower.includes("esp32")) {
+                log("[PERINGATAN] Chip terdeteksi bukan ESP32! Pastikan pilihan firmware benar.");
+            } else if (fileName.includes("esp8266") && !chipNameLower.includes("esp8266")) {
+                log("[PERINGATAN] Chip terdeteksi bukan ESP8266! Pastikan pilihan firmware benar.");
+            }
+
+            log(`Mengunduh file ${fileName}...`);
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`File ${fileName} tidak ditemukan di server!`);
+            
+            const arrayBuffer = await response.arrayBuffer();
+            const binaryString = new Uint8Array(arrayBuffer);
+
+            log(`Memulai proses flashing ke offset 0x${flashOffset.toString(16)}...`);
+            progressBar.style.display = "block";
+            progressFill.style.width = "0%";
+
+            const fileArray = [{
+                data: esploader.ui8ToBstr(binaryString),
+                address: flashOffset
+            }];
+
+            await esploader.writeFlash({
+                fileArray: fileArray,
+                flashSize: "keep",
+                eraseAll: false,
+                compress: true,
+                reportProgress: (fileIdx, written, total) => {
+                    const percentage = Math.round((written / total) * 100);
+                    progressFill.style.width = percentage + "%";
+                    progressFill.innerText = percentage + "%";
+                }
+            });
+
+            log("\n=================================");
+            log("[BERHASIL] Flashing Selesai!");
+            log("Tekan tombol RESET pada mikrokontroler.");
+            log("=================================");
+
+            await transport.disconnect();
+        } catch (err) {
+            log("\n[ERROR] " + err.message);
+        } finally {
+            connectBtn.disabled = false;
+            eraseBtn.disabled = false;
+        }
+    });
+
+    eraseBtn.addEventListener('click', async () => {
+        try {
+            connectBtn.disabled = true;
+            eraseBtn.disabled = true;
+            log("Meminta akses port serial...");
+
+            await initESPLoader();
+            log("Chip terdeteksi: " + esploader.chipName);
+            log("Menghapus seluruh memori flash...");
+
+            await esploader.eraseFlash();
+            log("\n[BERHASIL] Memori flash telah dibersihkan total!");
+
+            await transport.disconnect();
+        } catch (err) {
+            log("\n[ERROR] " + err.message);
+        } finally {
+            connectBtn.disabled = false;
+            eraseBtn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
