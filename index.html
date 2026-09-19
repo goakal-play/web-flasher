@@ -3,246 +3,586 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal ESP Web Flasher</title>
+    <title>AKAL Plays ESP Web Flasher</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #121212;
             color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
         }
+
         .card {
-            background-color: #1e1e1e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            max-width: 500px;
             width: 100%;
+            max-width: 560px;
+            background: #1e1e1e;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        h2 {
+            color: #00bcd4;
             text-align: center;
+            margin: 0 0 8px;
         }
-        h2 { color: #00bcd4; margin-bottom: 8px; }
-        p { color: #aaa; font-size: 14px; }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
         .form-group {
-            margin-bottom: 15px;
-            text-align: left;
+            margin-bottom: 16px;
         }
+
         label {
             display: block;
-            margin-bottom: 5px;
             font-size: 13px;
             color: #ccc;
+            margin-bottom: 7px;
         }
+
         select {
             width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            background-color: #2a2a2a;
-            color: #fff;
+            padding: 12px;
             border: 1px solid #444;
+            border-radius: 7px;
+            background: #2a2a2a;
+            color: white;
             font-size: 14px;
-            box-sizing: border-box;
         }
+
+        select:focus {
+            outline: 2px solid #00bcd4;
+        }
+
         .btn {
-            background-color: #00bcd4;
-            color: #121212;
+            width: 100%;
+            padding: 13px;
             border: none;
-            padding: 12px 24px;
+            border-radius: 7px;
+            background: #00bcd4;
+            color: #101010;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 6px;
             cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
-            width: 100%;
+            margin-top: 8px;
         }
-        .btn:hover { background-color: #008ba3; color: #fff; }
-        .btn:disabled { background-color: #444; color: #888; cursor: not-allowed; }
-        #log {
-            background-color: #000;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
+
+        .btn:hover {
+            background: #00a5bb;
+        }
+
+        .btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .info {
+            margin-top: 18px;
             padding: 12px;
-            border-radius: 6px;
-            height: 200px;
-            overflow-y: auto;
-            text-align: left;
-            margin-top: 20px;
+            border-radius: 7px;
+            background: #292929;
+            color: #bbb;
             font-size: 13px;
-            white-space: pre-wrap;
+            line-height: 1.6;
         }
-        .progress-bar {
+
+        .progress-container {
+            display: none;
+            margin-top: 18px;
+        }
+
+        .progress-track {
             width: 100%;
-            background-color: #333;
+            height: 20px;
+            background: #333;
             border-radius: 6px;
             overflow: hidden;
-            margin-top: 15px;
-            display: none;
         }
+
         .progress-fill {
-            height: 18px;
             width: 0%;
-            background-color: #00bcd4;
-            text-align: center;
-            font-size: 12px;
-            line-height: 18px;
+            height: 100%;
+            background: #00bcd4;
             color: #000;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
             font-weight: bold;
-            transition: width 0.2s;
+            transition: width 0.15s ease;
+        }
+
+        #log {
+            margin-top: 18px;
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #333;
+            border-radius: 7px;
+            padding: 12px;
+            height: 240px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            margin-top: 16px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .warning {
+            color: #ffb74d;
+        }
+
+        .success {
+            color: #00e676;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
 
 <div class="card">
-    <h2>Universal ESP Web Flasher</h2>
-    <p>Pilih firmware target, sistem akan menghapus flash otomatis sebelum mengisi firmware baru.</p>
 
-    <div class="form-group">
-        <label for="firmwareSelect">Pilih Firmware Target:</label>
-        <select id="firmwareSelect">
-            <option value="combined_esp32s2.bin" data-offset="0x0000">ESP32-S2 Firmware (combined_esp32s2.bin)</option>
-            <option value="combined_esp8266.bin" data-offset="0x0000">ESP8266 Firmware (combined_esp8266.bin)</option>
-        </select>
+    <h2>AKAL Plays ESP Web Flasher</h2>
+
+    <div class="subtitle">
+        Flash firmware ESP32-S2 dan ESP8266 langsung melalui browser.
+        <br>
+        Pastikan firmware yang dipilih sesuai dengan board.
     </div>
 
-    <button id="connectBtn" class="btn">Connect & Auto-Flash</button>
-
-    <div class="progress-bar" id="progressBar">
-        <div class="progress-fill" id="progressFill">0%</div>
+    <div class="info">
+        <strong>Persiapan:</strong><br>
+        1. Hubungkan board melalui USB. <br>
+        2. Khusus ESP32 S2 perlu masuk ke flash mode dulu dengan tekan tombol BOOT dan Reset bersamaan lalu lepas. <br>
+        3. Gunakan Chrome atau Edge di komputer.<br>
+        4. Tekan tombol Connect & Flash.<br>
+        5. Pilih port serial board Anda.
     </div>
 
-    <div id="log">Siap. Hubungkan ESP dan klik tombol di atas...</div>
+    <button id="connectBtn" class="btn">
+        Connect & Flash
+    </button>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill">
+                0%
+            </div>
+        </div>
+    </div>
+
+    <div id="log">Siap. Hubungkan ESP dan mulai flashing...</div>
+
+    <div class="footer">
+       © 2026 - AKAL Plays ESP Web Flasher
+    </div>
+
 </div>
 
-<!-- Polyfill Buffer Lengkap untuk Window Scope -->
-<script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-<script>
-    if (typeof window.Buffer === 'undefined') {
-        window.Buffer = buffer.Buffer;
-    }
-</script>
-
 <script type="module">
-    import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
-    const connectBtn = document.getElementById('connectBtn');
-    const firmwareSelect = document.getElementById('firmwareSelect');
-    const logDiv = document.getElementById('log');
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
+    /*
+     * Menggunakan esptool-js v0.6.0.
+     *
+     * Versi ini menggunakan Uint8Array pada writeFlash().
+     * Tidak membutuhkan Buffer polyfill.
+     */
+
+    import {
+        ESPLoader,
+        Transport
+    } from "https://unpkg.com/esptool-js@0.6.0/bundle.js";
+
+
+    // ==============================
+    // ELEMENT HTML
+    // ==============================
+
+    const connectBtn =
+        document.getElementById("connectBtn");
+
+    const logDiv =
+        document.getElementById("log");
+
+    const progressContainer =
+        document.getElementById("progressContainer");
+
+    const progressFill =
+        document.getElementById("progressFill");
+
+
+    // ==============================
+    // VARIABEL GLOBAL
+    // ==============================
 
     let device = null;
     let transport = null;
     let esploader = null;
 
-    function log(msg) {
-        logDiv.innerText += "\n" + msg;
+
+    // ==============================
+    // LOGGING
+    // ==============================
+
+    function log(message) {
+
+        logDiv.innerText += "\n" + message;
+
         logDiv.scrollTop = logDiv.scrollHeight;
     }
 
+
+    function clearLog() {
+
+        logDiv.innerText = "";
+    }
+
+
+    function setProgress(percent, text = null) {
+
+        const value = Math.max(
+            0,
+            Math.min(100, Math.round(percent))
+        );
+
+        progressFill.style.width = value + "%";
+
+        progressFill.innerText =
+            text !== null ? text : value + "%";
+    }
+
+
+    // ==============================
+    // CEK WEB SERIAL
+    // ==============================
+
     if (!("serial" in navigator)) {
-        log("[ERROR] Browser tidak mendukung Web Serial API! Gunakan Chrome/Edge di PC.");
+
+        logDiv.innerText =
+            "[ERROR] Browser tidak mendukung Web Serial API!\n" +
+            "Gunakan Google Chrome atau Microsoft Edge di komputer.";
+
         connectBtn.disabled = true;
     }
 
-    async function initESPLoader() {
-        device = await navigator.serial.requestPort();
-        transport = new Transport(device);
-        esploader = new ESPLoader({
-            transport: transport,
-            baudrate: 460800,
-            terminal: {
-                clean: () => { logDiv.innerText = ""; },
-                writeLine: (data) => log(data),
-                write: (data) => {}
-            }
-        });
-        await esploader.main();
+
+    // ==============================
+    // FORMAT ERROR
+    // ==============================
+
+    function getErrorMessage(error) {
+
+        if (error instanceof Error) {
+            return error.message;
+        }
+
+        return String(error);
     }
 
-    connectBtn.addEventListener('click', async () => {
-        try {
-            connectBtn.disabled = true;
-            
-            const selectedOption = firmwareSelect.options[firmwareSelect.selectedIndex];
-            const fileName = selectedOption.value;
-            const flashOffset = parseInt(selectedOption.getAttribute('data-offset'));
 
-            log("Meminta akses port serial...");
-            await initESPLoader();
-            
-            log("Chip terdeteksi: " + esploader.chipName);
+    // ==============================
+    // INISIALISASI ESPTOOL
+    // ==============================
 
-            const chipNameLower = esploader.chipName.toLowerCase();
-            if (fileName.includes("esp32") && !chipNameLower.includes("esp32")) {
-                log("[PERINGATAN] Chip terdeteksi bukan ESP32!");
-            } else if (fileName.includes("esp8266") && !chipNameLower.includes("esp8266")) {
-                log("[PERINGATAN] Chip terdeteksi bukan ESP8266!");
-            }
+    async function initESPLoader() {
 
-            log(`Mengunduh file ${fileName}...`);
-            const response = await fetch(fileName);
-            if (!response.ok) throw new Error(`File ${fileName} tidak ditemukan di server!`);
-            
-            const arrayBuffer = await response.arrayBuffer();
+        device = await navigator.serial.requestPort();
 
-            log("Menghapus seluruh isi flash memori (Erase Flash)...");
-            progressBar.style.display = "block";
-            progressFill.style.width = "0%";
-            progressFill.innerText = "Erasing...";
+        transport = new Transport(device, true);
 
-            // Membaca binary stream tanpa mengandalkan Buffer.from
-            const bytes = new Uint8Array(arrayBuffer);
-            let binaryString = "";
-            const chunkSize = 0x8000;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-                binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-            }
+        esploader = new ESPLoader({
 
-            const fileArray = [{
-                data: binaryString,
-                address: flashOffset
-            }];
+            transport: transport,
 
-            log(`Memulai menulis firmware ke offset 0x${flashOffset.toString(16)}...`);
+            baudrate: 460800,
 
-            await esploader.writeFlash({
-                fileArray: fileArray,
-                flashSize: "keep",
-                eraseAll: true,
-                compress: true,
-                reportProgress: (fileIdx, written, total) => {
-                    const percentage = Math.round((written / total) * 100);
-                    progressFill.style.width = percentage + "%";
-                    progressFill.innerText = percentage + "%";
+            terminal: {
+
+                clean: () => {
+                    // Tidak menghapus log aplikasi.
+                },
+
+                writeLine: () => {
+                    // Sembunyikan log internal esptool.js agar tampilan tetap bersih.
+                },
+
+                write: () => {
+                    // Sembunyikan log internal esptool.js agar tampilan tetap bersih.
                 }
-            });
 
-            log("\n=================================");
-            log("[BERHASIL] Erase & Flashing Selesai!");
-            log("=================================");
-
-        } catch (err) {
-            log("\n[ERROR] " + err.message);
-        } finally {
-            // Otomatis menutup koneksi Serial Port setelah selesai/terjadi error
-            if (transport) {
-                try {
-                    log("Menutup koneksi port serial...");
-                    await transport.disconnect();
-                    await transport.waitForUnlock();
-                    log("Port Serial berhasil didiskoneksi otomatis.");
-                    log("Silakan tekan tombol RESET / re-plug USB pada board.");
-                } catch (e) {
-                    // Abaikan jika penutupan port sudah berhasil sebelumnya
-                }
             }
-            connectBtn.disabled = false;
+
+        });
+
+        return await esploader.main();
+    }
+
+
+    // ==============================
+    // VALIDASI CHIP
+    // ==============================
+
+    function isCompatibleChip(chipName, targetChip) {
+
+        const chip = chipName.toLowerCase();
+
+        if (targetChip === "esp8266") {
+
+            return chip.includes("esp8266");
         }
+
+        if (targetChip === "esp32s2") {
+
+            return chip.includes("esp32-s2") ||
+                   chip.includes("esp32s2");
+        }
+
+        return false;
+    }
+
+
+    // ==============================
+    // DETEKSI CHIP DAN FIRMWARE
+    // ==============================
+
+    const chipFirmwareMap = {
+        esp8266: {
+            fileName: "combined_esp8266.bin",
+            flashOffset: 0x0000
+        },
+        esp32s2: {
+            fileName: "combined_esp32s2.bin",
+            flashOffset: 0x0000
+        },
+        "esp32-s2": {
+            fileName: "combined_esp32s2.bin",
+            flashOffset: 0x0000
+        }
+    };
+
+    function getFirmwareForChip(chipName) {
+        const chip = String(chipName || "").toLowerCase();
+
+        if (chip.includes("esp8266")) {
+            return {
+                chip: "esp8266",
+                ...chipFirmwareMap.esp8266
+            };
+        }
+
+        if (chip.includes("esp32-s2") || chip.includes("esp32s2")) {
+            return {
+                chip: "esp32s2",
+                ...chipFirmwareMap.esp32s2
+            };
+        }
+
+        throw new Error(
+            "Chip tidak didukung. Hanya ESP8266 dan ESP32-S2 yang didukung.\n" +
+            "Chip terdeteksi: " + chipName
+        );
+    }
+
+
+    // ==============================
+    // AMBIL FIRMWARE DARI GITHUB PAGES
+    // ==============================
+
+    async function downloadFirmware(fileName) {
+
+        const firmwareUrl = new URL(
+            fileName,
+            window.location.href
+        ).href;
+
+        const response = await fetch(firmwareUrl, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Firmware tidak ditemukan: " +
+                fileName +
+                " | HTTP " +
+                response.status
+            );
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const firmwareData = new Uint8Array(arrayBuffer);
+
+        if (firmwareData.length === 0) {
+            throw new Error("File firmware kosong.");
+        }
+
+        return firmwareData;
+    }
+
+
+    // ==============================
+    // PROSES FLASHING
+    // ==============================
+
+    async function flashFirmware() {
+
+        clearLog();
+
+        progressContainer.style.display = "block";
+        setProgress(0, "Connecting...");
+
+        const chipName = await initESPLoader();
+        const firmware = getFirmwareForChip(chipName);
+        const firmwareData = await downloadFirmware(firmware.fileName);
+
+        clearLog();
+        log("Menghapus seluruh isi flash...");
+        log("Mohon jangan mencabut kabel USB.");
+
+        setProgress(0, "Erasing...");
+
+        const fileArray = [
+            {
+                data: firmwareData,
+                address: firmware.flashOffset
+            }
+        ];
+
+        clearLog();
+        log("Memulai flashing firmware, Silahkan tunggu...");
+        log("Mohon jangan mencabut kabel USB.");
+
+        setProgress(0, "Erasing...");
+
+        await esploader.writeFlash({
+
+            fileArray: fileArray,
+
+            flashSize: "keep",
+            eraseAll: true,
+            compress: true,
+
+            reportProgress: (
+                fileIndex,
+                written,
+                total
+            ) => {
+
+                const percentage =
+                    total > 0
+                        ? (written / total) * 100
+                        : 0;
+
+                setProgress(percentage);
+
+            }
+
+        });
+
+        setProgress(100, "100%");
+
+        clearLog();
+        log("=================================");
+        log("[BERHASIL] Flashing selesai!");
+        log("=================================");
+        log("");
+        log("Silahkan teken reset di ESP untuk mulai menggunakan Wifi Webkit.");
+
+        try {
+            await esploader.after("hard_reset");
+        } catch (resetError) {
+            // Abaikan error reset otomatis.
+        }
+
+    }
+
+
+    // ==============================
+    // DISCONNECT SERIAL
+    // ==============================
+
+    async function disconnectSerial() {
+
+        if (!transport) {
+            return;
+        }
+
+        try {
+            await transport.disconnect();
+            await transport.waitForUnlock(500);
+        } catch (error) {
+            // Abaikan error saat disconnect.
+        } finally {
+            device = null;
+            transport = null;
+            esploader = null;
+        }
+
+    }
+
+
+    // ==============================
+    // TOMBOL CONNECT & FLASH
+    // ==============================
+
+    connectBtn.addEventListener("click", async () => {
+
+        if (connectBtn.disabled) {
+            return;
+        }
+
+        connectBtn.disabled = true;
+
+        try {
+
+            await flashFirmware();
+
+        } catch (error) {
+
+            log("");
+            log("[ERROR] " + getErrorMessage(error));
+            setProgress(0, "Error");
+
+        } finally {
+
+            await disconnectSerial();
+            connectBtn.disabled = false;
+
+        }
+
     });
 </script>
 
