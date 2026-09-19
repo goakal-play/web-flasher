@@ -61,15 +61,13 @@
         }
         .btn:hover { background-color: #008ba3; color: #fff; }
         .btn:disabled { background-color: #444; color: #888; cursor: not-allowed; }
-        .btn-danger { background-color: #f44336; color: #fff; }
-        .btn-danger:hover { background-color: #d32f2f; }
         #log {
             background-color: #000;
             color: #00ff00;
             font-family: 'Courier New', Courier, monospace;
             padding: 12px;
             border-radius: 6px;
-            height: 180px;
+            height: 200px;
             overflow-y: auto;
             text-align: left;
             margin-top: 20px;
@@ -101,7 +99,7 @@
 
 <div class="card">
     <h2>Universal ESP Web Flasher</h2>
-    <p>Pilih firmware target lalu klik Connect & Flash.</p>
+    <p>Pilih firmware target, sistem akan menghapus flash otomatis sebelum mengisi firmware baru.</p>
 
     <div class="form-group">
         <label for="firmwareSelect">Pilih Firmware Target:</label>
@@ -111,8 +109,7 @@
         </select>
     </div>
 
-    <button id="connectBtn" class="btn">Connect & Flash</button>
-    <button id="eraseBtn" class="btn btn-danger">Erase Flash</button>
+    <button id="connectBtn" class="btn">Connect & Auto-Flash</button>
 
     <div class="progress-bar" id="progressBar">
         <div class="progress-fill" id="progressFill">0%</div>
@@ -121,11 +118,16 @@
     <div id="log">Siap. Hubungkan ESP dan klik tombol di atas...</div>
 </div>
 
+<!-- Load Polyfill Buffer untuk Browser -->
+<script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+<script>
+    window.Buffer = buffer.Buffer;
+</script>
+
 <script type="module">
     import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
     const connectBtn = document.getElementById('connectBtn');
-    const eraseBtn = document.getElementById('eraseBtn');
     const firmwareSelect = document.getElementById('firmwareSelect');
     const logDiv = document.getElementById('log');
     const progressBar = document.getElementById('progressBar');
@@ -143,7 +145,6 @@
     if (!("serial" in navigator)) {
         log("[ERROR] Browser tidak mendukung Web Serial API! Gunakan Chrome/Edge di PC.");
         connectBtn.disabled = true;
-        eraseBtn.disabled = true;
     }
 
     async function initESPLoader() {
@@ -158,14 +159,12 @@
                 write: (data) => {}
             }
         });
-        // main() akan otomatis handshake & deteksi jenis chip (ESP32, ESP8266, dll)
         await esploader.main();
     }
 
     connectBtn.addEventListener('click', async () => {
         try {
             connectBtn.disabled = true;
-            eraseBtn.disabled = true;
             
             const selectedOption = firmwareSelect.options[firmwareSelect.selectedIndex];
             const fileName = selectedOption.value;
@@ -174,14 +173,13 @@
             log("Meminta akses port serial...");
             await initESPLoader();
             
-            log("Chip terdeteksi otomatis: " + esploader.chipName);
+            log("Chip terdeteksi: " + esploader.chipName);
 
-            // Validasi Sederhana Jenis Chip
             const chipNameLower = esploader.chipName.toLowerCase();
             if (fileName.includes("esp32") && !chipNameLower.includes("esp32")) {
-                log("[PERINGATAN] Chip terdeteksi bukan ESP32! Pastikan pilihan firmware benar.");
+                log("[PERINGATAN] Chip terdeteksi bukan ESP32!");
             } else if (fileName.includes("esp8266") && !chipNameLower.includes("esp8266")) {
-                log("[PERINGATAN] Chip terdeteksi bukan ESP8266! Pastikan pilihan firmware benar.");
+                log("[PERINGATAN] Chip terdeteksi bukan ESP8266!");
             }
 
             log(`Mengunduh file ${fileName}...`);
@@ -189,21 +187,31 @@
             if (!response.ok) throw new Error(`File ${fileName} tidak ditemukan di server!`);
             
             const arrayBuffer = await response.arrayBuffer();
-            const binaryString = new Uint8Array(arrayBuffer);
 
-            log(`Memulai proses flashing ke offset 0x${flashOffset.toString(16)}...`);
+            log("Menghapus seluruh isi flash memori (Erase Flash)...");
             progressBar.style.display = "block";
             progressFill.style.width = "0%";
+            progressFill.innerText = "Erasing...";
+
+            // Konversi ArrayBuffer menjadi Uint8Array
+            const fileData = new Uint8Array(arrayBuffer);
+            let binaryString = "";
+            for (let i = 0; i < fileData.length; i++) {
+                binaryString += String.fromCharCode(fileData[i]);
+            }
 
             const fileArray = [{
-                data: esploader.ui8ToBstr(binaryString),
+                data: binaryString,
                 address: flashOffset
             }];
 
+            log(`Memulai menulis firmware ke offset 0x${flashOffset.toString(16)}...`);
+
+            // Parameter eraseAll: true diaktifkan untuk otomatis menghapus flash sebelum menulis
             await esploader.writeFlash({
                 fileArray: fileArray,
                 flashSize: "keep",
-                eraseAll: false,
+                eraseAll: true,
                 compress: true,
                 reportProgress: (fileIdx, written, total) => {
                     const percentage = Math.round((written / total) * 100);
@@ -213,7 +221,7 @@
             });
 
             log("\n=================================");
-            log("[BERHASIL] Flashing Selesai!");
+            log("[BERHASIL] Erase & Flashing Selesai!");
             log("Tekan tombol RESET pada mikrokontroler.");
             log("=================================");
 
@@ -222,29 +230,6 @@
             log("\n[ERROR] " + err.message);
         } finally {
             connectBtn.disabled = false;
-            eraseBtn.disabled = false;
-        }
-    });
-
-    eraseBtn.addEventListener('click', async () => {
-        try {
-            connectBtn.disabled = true;
-            eraseBtn.disabled = true;
-            log("Meminta akses port serial...");
-
-            await initESPLoader();
-            log("Chip terdeteksi: " + esploader.chipName);
-            log("Menghapus seluruh memori flash...");
-
-            await esploader.eraseFlash();
-            log("\n[BERHASIL] Memori flash telah dibersihkan total!");
-
-            await transport.disconnect();
-        } catch (err) {
-            log("\n[ERROR] " + err.message);
-        } finally {
-            connectBtn.disabled = false;
-            eraseBtn.disabled = false;
         }
     });
 </script>
