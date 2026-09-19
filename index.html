@@ -461,17 +461,16 @@
 
         clearLog();
 
-        log("Menghapus seluruh isi flash...");
-        log("Mohon jangan mencabut kabel USB.");
-        log("Memulai flashing firmware...");
-
         progressContainer.style.display = "block";
-
         setProgress(0, "Connecting...");
 
         const chipName = await initESPLoader();
         const firmware = getFirmwareForChip(chipName);
         const firmwareData = await downloadFirmware(firmware.fileName);
+
+        clearLog();
+        log("Menghapus seluruh isi flash...");
+        log("Mohon jangan mencabut kabel USB.");
 
         setProgress(0, "Erasing...");
 
@@ -481,6 +480,9 @@
                 address: firmware.flashOffset
             }
         ];
+
+        clearLog();
+        log("Memulai flashing firmware...");
 
         setProgress(0, "Flashing...");
 
@@ -511,7 +513,7 @@
 
         setProgress(100, "100%");
 
-        log("");
+        clearLog();
         log("=================================");
         log("[BERHASIL] Flashing selesai!");
         log("=================================");
