@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal ESP Web Flasher</title>
+    <title>AKAL Plays ESP Web Flasher</title>
 
     <style>
         * {
@@ -176,7 +175,7 @@
 
 <div class="card">
 
-    <h2>Universal ESP Web Flasher</h2>
+    <h2>AKAL Plays ESP Web Flasher</h2>
 
     <div class="subtitle">
         Flash firmware ESP32-S2 dan ESP8266 langsung melalui browser.
@@ -184,34 +183,13 @@
         Pastikan firmware yang dipilih sesuai dengan board.
     </div>
 
-    <div class="form-group">
-        <label for="firmwareSelect">
-            Pilih Firmware Target
-        </label>
-
-        <select id="firmwareSelect">
-            <option
-                value="combined_esp32s2.bin"
-                data-chip="esp32s2"
-                data-offset="0x0000">
-                ESP32-S2 — combined_esp32s2.bin
-            </option>
-
-            <option
-                value="combined_esp8266.bin"
-                data-chip="esp8266"
-                data-offset="0x0000">
-                ESP8266 — combined_esp8266.bin
-            </option>
-        </select>
-    </div>
-
     <div class="info">
         <strong>Persiapan:</strong><br>
-        1. Hubungkan board melalui USB.<br>
-        2. Gunakan Chrome atau Edge di komputer.<br>
-        3. Tekan tombol Connect & Flash.<br>
-        4. Pilih port serial board Anda.
+        1. Hubungkan board melalui USB. <br>
+        2. Khusus ESP32 S2 perlu masuk ke flash mode dulu dengan tekan tombol BOOT dan Reset bersamaan lalu lepas. <br>
+        3. Gunakan Chrome atau Edge di komputer.<br>
+        4. Tekan tombol Connect & Flash.<br>
+        5. Pilih port serial board Anda.
     </div>
 
     <button id="connectBtn" class="btn">
@@ -229,7 +207,7 @@
     <div id="log">Siap. Hubungkan ESP dan mulai flashing...</div>
 
     <div class="footer">
-        Universal ESP Web Flasher
+       © 2026 - AKAL Plays ESP Web Flasher
     </div>
 
 </div>
@@ -255,9 +233,6 @@
 
     const connectBtn =
         document.getElementById("connectBtn");
-
-    const firmwareSelect =
-        document.getElementById("firmwareSelect");
 
     const logDiv =
         document.getElementById("log");
@@ -416,63 +391,45 @@
 
 
     // ==============================
-    // AMBIL FIRMWARE DARI GITHUB PAGES
+    // DETEKSI CHIP DAN FIRMWARE
     // ==============================
 
-    async function downloadFirmware(fileName) {
+    const chipFirmwareMap = {
+        esp8266: {
+            fileName: "combined_esp8266.bin",
+            flashOffset: 0x0000
+        },
+        esp32s2: {
+            fileName: "combined_esp32s2.bin",
+            flashOffset: 0x0000
+        },
+        "esp32-s2": {
+            fileName: "combined_esp32s2.bin",
+            flashOffset: 0x0000
+        }
+    };
 
-        /*
-         * Relative URL otomatis mengikuti alamat GitHub Pages.
-         *
-         * Contoh:
-         * https://username.github.io/repository/
-         *
-         * File diambil dari:
-         * https://username.github.io/repository/fileName
-         */
+    function getFirmwareForChip(chipName) {
+        const chip = String(chipName || "").toLowerCase();
 
-        const firmwareUrl = new URL(
-            fileName,
-            window.location.href
-        ).href;
-
-        log("Mengunduh firmware:");
-        log(firmwareUrl);
-
-        const response = await fetch(firmwareUrl, {
-            cache: "no-store"
-        });
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Firmware tidak ditemukan: " +
-                fileName +
-                " | HTTP " +
-                response.status
-            );
+        if (chip.includes("esp8266")) {
+            return {
+                chip: "esp8266",
+                ...chipFirmwareMap.esp8266
+            };
         }
 
-        const arrayBuffer =
-            await response.arrayBuffer();
-
-        const firmwareData =
-            new Uint8Array(arrayBuffer);
-
-        if (firmwareData.length === 0) {
-
-            throw new Error(
-                "File firmware kosong."
-            );
+        if (chip.includes("esp32-s2") || chip.includes("esp32s2")) {
+            return {
+                chip: "esp32s2",
+                ...chipFirmwareMap.esp32s2
+            };
         }
 
-        log(
-            "Ukuran firmware: " +
-            firmwareData.length +
-            " bytes"
+        throw new Error(
+            "Chip tidak didukung. Hanya ESP8266 dan ESP32-S2 yang didukung.\n" +
+            "Chip terdeteksi: " + chipName
         );
-
-        return firmwareData;
     }
 
 
@@ -482,59 +439,28 @@
 
     async function flashFirmware() {
 
-        const selectedOption =
-            firmwareSelect.options[
-                firmwareSelect.selectedIndex
-            ];
-
-        const fileName =
-            selectedOption.value;
-
-        const targetChip =
-            selectedOption.dataset.chip;
-
-        const flashOffset =
-            parseInt(
-                selectedOption.dataset.offset,
-                16
-            );
-
         clearLog();
 
         log("=================================");
         log(" UNIVERSAL ESP WEB FLASHER");
         log("=================================");
 
-        log("Target firmware: " + fileName);
-
-        log(
-            "Flash offset: 0x" +
-            flashOffset.toString(16).toUpperCase()
-        );
-
         progressContainer.style.display = "block";
 
         setProgress(0, "Connecting...");
 
         // 1. Hubungkan ke board
-        const chipName =
-            await initESPLoader();
+        const chipName = await initESPLoader();
 
-        // 2. Validasi jenis chip
-        if (!isCompatibleChip(chipName, targetChip)) {
+        // 2. Pilih firmware otomatis berdasarkan chip
+        const firmware = getFirmwareForChip(chipName);
 
-            throw new Error(
-                "Firmware tidak cocok dengan chip!\n" +
-                "Chip terdeteksi: " + chipName + "\n" +
-                "Firmware dipilih: " + targetChip
-            );
-        }
-
-        log("Chip sesuai dengan firmware.");
+        log("Chip terdeteksi: " + chipName);
+        log("Firmware otomatis: " + firmware.fileName);
+        log("Flash offset: 0x" + firmware.flashOffset.toString(16).toUpperCase());
 
         // 3. Download firmware
-        const firmwareData =
-            await downloadFirmware(fileName);
+        const firmwareData = await downloadFirmware(firmware.fileName);
 
         // 4. Persiapan erase
         log("");
@@ -543,15 +469,10 @@
 
         setProgress(0, "Erasing...");
 
-        /*
-         * writeFlash() akan melakukan eraseAll terlebih dahulu,
-         * kemudian menulis file binary ke alamat yang ditentukan.
-         */
-
         const fileArray = [
             {
                 data: firmwareData,
-                address: flashOffset
+                address: firmware.flashOffset
             }
         ];
 
@@ -565,20 +486,8 @@
 
             fileArray: fileArray,
 
-            /*
-             * "keep" mempertahankan ukuran flash yang terdeteksi.
-             * Untuk v0.6.0, opsi "detect" juga tersedia.
-             */
             flashSize: "keep",
-
-            /*
-             * Menghapus seluruh isi flash sebelum penulisan.
-             */
             eraseAll: true,
-
-            /*
-             * Kompresi data untuk mempercepat transfer.
-             */
             compress: true,
 
             reportProgress: (
@@ -605,9 +514,6 @@
         log("[BERHASIL] Flashing selesai!");
         log("=================================");
 
-        /*
-         * Reset board setelah flashing.
-         */
         try {
 
             log("Melakukan reset board...");
