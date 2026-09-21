@@ -538,6 +538,7 @@
 
         progressContainer.style.display = "block";
         setProgress(0, "Connecting...");
+        log("Connecting...");
 
         const chipName = await initESPLoader();
         const firmware = getFirmwareForChip(chipName, selectedVersion);
