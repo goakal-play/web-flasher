@@ -159,6 +159,31 @@
             color: #00e676;
         }
 
+        .form-group-radio {
+            margin-bottom: 16px;
+        }
+
+        .radio-group label {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 24px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        .radio-group input[type="radio"]:accent-color {
+            accent-color: #00bcd4;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 10px;
@@ -180,16 +205,30 @@
     <div class="subtitle">
         Flash firmware ESP32-S2 dan ESP8266 langsung melalui browser.
         <br>
-        Pastikan firmware yang dipilih sesuai dengan board.
+        Pastikan firmware yang dipilih sesuai dengan PS4 kalian.
     </div>
 
     <div class="info">
         <strong>Persiapan:</strong><br>
         1. Hubungkan board melalui USB. <br>
-        2. Khusus ESP32 S2 perlu masuk ke flash mode dulu dengan tekan tombol BOOT dan Reset bersamaan lalu lepas Reset duluan. <br>
+        2. Khusus ESP32 S2 perlu masuk ke flash mode dulu dengan tekan tombol BOOT dan Reset bersamaan lalu lepas. <br>
         3. Gunakan Chrome atau Edge di komputer.<br>
         4. Tekan tombol Connect & Flash.<br>
         5. Pilih port serial board Anda.
+    </div>
+<br/>
+    <div class="form-group-radio">
+        <label><strong>Pilih Versi Firmware:</strong></label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="firmwareVersion" value="v1" id="fwVersion1">
+                Fw 7.00 - 13.00
+            </label>
+            <label>
+                <input type="radio" name="firmwareVersion" value="v2" id="fwVersion2">
+                Fw 13.02 - 13.52
+            </label>
+        </div>
     </div>
 
     <button id="connectBtn" class="btn">
@@ -380,33 +419,52 @@
 
     const chipFirmwareMap = {
         esp8266: {
-            fileName: "combined_esp8266.bin",
-            flashOffset: 0x0000
+            v1: {
+                fileName: "combined_esp8266.bin",
+                flashOffset: 0x0000
+            },
+            v2: {
+                fileName: "esp82_135x.bin",
+                flashOffset: 0x0000
+            }
         },
         esp32s2: {
-            fileName: "combined_esp32s2.bin",
-            flashOffset: 0x0000
+            v1: {
+                fileName: "combined_esp32s2.bin",
+                flashOffset: 0x0000
+            },
+            v2: {
+                fileName: "esp32_135x.bin",
+                flashOffset: 0x0000
+            }
         },
         "esp32-s2": {
-            fileName: "combined_esp32s2.bin",
-            flashOffset: 0x0000
+            v1: {
+                fileName: "combined_esp32s2.bin",
+                flashOffset: 0x0000
+            },
+            v2: {
+                fileName: "esp32_135x.bin",
+                flashOffset: 0x0000
+            }
         }
     };
 
-    function getFirmwareForChip(chipName) {
+    function getFirmwareForChip(chipName, firmwareVersion) {
         const chip = String(chipName || "").toLowerCase();
+        const version = firmwareVersion || "v1";
 
         if (chip.includes("esp8266")) {
             return {
                 chip: "esp8266",
-                ...chipFirmwareMap.esp8266
+                ...chipFirmwareMap.esp8266[version]
             };
         }
 
         if (chip.includes("esp32-s2") || chip.includes("esp32s2")) {
             return {
                 chip: "esp32s2",
-                ...chipFirmwareMap.esp32s2
+                ...(chipFirmwareMap["esp32-s2"] || chipFirmwareMap.esp32s2)[version]
             };
         }
 
@@ -454,10 +512,27 @@
 
 
     // ==============================
+    // VALIDASI PILIHAN FIRMWARE
+    // ==============================
+
+    function getSelectedFirmwareVersion() {
+        const selectedOption = document.querySelector('input[name="firmwareVersion"]:checked');
+        return selectedOption ? selectedOption.value : null;
+    }
+
+    // ==============================
     // PROSES FLASHING
     // ==============================
 
     async function flashFirmware() {
+
+        const selectedVersion = getSelectedFirmwareVersion();
+
+        if (!selectedVersion) {
+            // log("[ERROR] Pilih versi firmware dulu!");
+            setProgress(0, "Error");
+            throw new Error("Pilih versi firmware dulu!");
+        }
 
         clearLog();
 
@@ -465,7 +540,7 @@
         setProgress(0, "Connecting...");
 
         const chipName = await initESPLoader();
-        const firmware = getFirmwareForChip(chipName);
+        const firmware = getFirmwareForChip(chipName, selectedVersion);
         const firmwareData = await downloadFirmware(firmware.fileName);
 
         clearLog();
@@ -519,7 +594,7 @@
         log("[BERHASIL] Flashing selesai!");
         log("=================================");
         log("");
-        log("Silahkan teken reset di ESP / re-plug USB untuk mulai menggunakan Wifi Webkit.");
+        log("Silahkan teken reset di ESP untuk mulai menggunakan Wifi Webkit.");
 
         try {
             await esploader.after("hard_reset");
