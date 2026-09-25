@@ -212,9 +212,8 @@
         <strong>Persiapan:</strong><br>
         1. Hubungkan board melalui USB. <br>
         2. Khusus ESP32 S2 perlu masuk ke flash mode dulu dengan tekan tombol BOOT dan Reset bersamaan lalu lepas. <br>
-        3. Gunakan Chrome atau Edge di komputer.<br>
-        4. Tekan tombol Connect & Flash.<br>
-        5. Pilih port serial board Anda.
+        3. Tekan tombol Connect & Flash.<br>
+        4. Pilih port serial board Anda.  
     </div>
 <br/>
     <div class="form-group-radio">
@@ -608,11 +607,14 @@
         setProgress(100, "100%");
 
         clearLog();
-        log("=================================");
+        // log("=================================");
         log("[BERHASIL] Flashing selesai!");
-        log("=================================");
+        // log("=================================");
         log("");
         log("Silahkan teken reset di ESP untuk mulai menggunakan Wifi Webkit.");
+        log("Buka 10.1.1.1/setting untuk ganti nama dan password WiFi, update GoldHen dan ganti background.");
+        log("");
+        log("Untuk registrasi awal kirimkan ID Chip yang tampil dihalaman regis ke https://t.me/yayatpy ")
 
         try {
             await esploader.after("hard_reset");
