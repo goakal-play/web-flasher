@@ -222,13 +222,18 @@
         <div class="radio-group">
             <label>
                 <input type="radio" name="firmwareVersion" value="v1" id="fwVersion1">
-                Fw 7.00 - 13.00
+                7.00 - 13.00 (RG)
             </label>
             <label>
                 <input type="radio" name="firmwareVersion" value="v2" id="fwVersion2">
-                Fw 13.02 - 13.52
+                13.02 - 13.52 (RG)
+            </label>
+            <label>
+                <input type="radio" name="firmwareVersion" value="v3" id="fwVersion3">
+                7.00 - 13.52 (GH)
             </label>
         </div>
+        <div class="subtitle">Note: RG = RawGame, GH = GamerHack</div>
     </div>
 
     <button id="connectBtn" class="btn">
@@ -426,6 +431,10 @@
             v2: {
                 fileName: "esp82_135x.bin",
                 flashOffset: 0x0000
+            },
+            v3: {
+                fileName: "esp82_7-1352.bin",
+                flashOffset: 0x0000
             }
         },
         esp32s2: {
@@ -436,6 +445,10 @@
             v2: {
                 fileName: "esp32_135x.bin",
                 flashOffset: 0x0000
+            },
+            v3: {
+                fileName: "esp32_7-1352.bin",
+                flashOffset: 0x0000
             }
         },
         "esp32-s2": {
@@ -445,6 +458,10 @@
             },
             v2: {
                 fileName: "esp32_135x.bin",
+                flashOffset: 0x0000
+            },
+             v3: {
+                fileName: "esp32_7-1352.bin",
                 flashOffset: 0x0000
             }
         }
