@@ -32,8 +32,8 @@ const dictionary = {
     connecting: "Connecting...",
     erasing: "Erasing...",
 
-    flashing: "Memulai flashing firmware, Silahkan tunggu...",
-    doNotDisconnect: "Mohon jangan mencabut kabel USB.",
+    flashing: "Memulai flashing firmware... Mohon jangan mencabut kabel USB.",
+    doNotDisconnect: "Jangan pindah tab atau jendela agar proses flashing tidak terganggu.",
 
     eraseMessage: "Menghapus seluruh isi flash...",
 
@@ -77,7 +77,7 @@ const dictionary = {
 
     footer: "© 2026 - AKAL Plays ESP Web Flasher",
 
-    languageButton: "Language: EN",
+    languageButton: "English: EN",
   },
 
   en: {
@@ -113,8 +113,8 @@ const dictionary = {
     connecting: "Connecting...",
     erasing: "Erasing...",
 
-    flashing: "Flashing firmware, please wait...",
-    doNotDisconnect: "Please do not disconnect the USB cable.",
+    flashing: "Flashing firmware..., Please do not disconnect the USB cable.",
+    doNotDisconnect: "Keep this window visible — switching to another tab or window can interrupt the flash.",
 
     eraseMessage: "Erasing the entire flash...",
 
@@ -159,7 +159,7 @@ const dictionary = {
 
     footer: "© 2026 - AKAL Plays ESP Web Flasher",
 
-    languageButton: "Bahasa: ID",
+    languageButton: "Indonesia: ID",
   },
 };
 
