@@ -40,7 +40,7 @@ const dictionary = {
     success: "[BERHASIL] Flashing selesai!",
 
     resetMessage:
-      "Tekan tombol Reset pada ESP, lalu buka 10.1.1.1 di browser untuk menggunakan WebKit.",
+      "Tekan tombol Reset pada ESP, hubungkan PS4 ke wifi Webkit PS4 (pass: 12345678). lalu buka 10.1.1.1 di browser atau menu User Guide untuk menggunakan WebKit.",
 
     settingMessage:
       "Buka 10.1.1.1/setting untuk mengganti nama dan password WiFi, memperbarui GoldHEN, serta mengubah background.",
@@ -121,7 +121,7 @@ const dictionary = {
     success: "[SUCCESS] Flashing completed!",
 
     resetMessage:
-      "Press the Reset button on the ESP, then open 10.1.1.1 in your browser to use the WebKit.",
+      "Press the Reset button on the ESP, connect your PS4 to Webkit PS4 (pass: 12345678), then open 10.1.1.1 in the browser or use the User Guide menu to access WebKit.",
 
     settingMessage:
       "Go to 10.1.1.1/setting to change the WiFi name and password, update GoldHEN, and change the background.",
